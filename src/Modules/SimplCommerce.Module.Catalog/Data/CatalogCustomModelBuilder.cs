@@ -10,6 +10,8 @@ namespace SimplCommerce.Module.Catalog.Data
     {
         public void Build(ModelBuilder modelBuilder)
         {
+            modelBuilder.ApplyConfiguration(new PackagingInquiryTypeConfiguration());
+
             modelBuilder.Entity<ProductLink>()
                 .HasOne(x => x.Product)
                 .WithMany(p => p.ProductLinks)

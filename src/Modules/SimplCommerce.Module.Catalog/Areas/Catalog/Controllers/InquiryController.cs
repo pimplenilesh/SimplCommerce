@@ -20,34 +20,44 @@ namespace SimplCommerce.Module.Catalog.Areas.Catalog.Controllers
         }
 
         [HttpPost]
-        public IActionResult SubmitQuote(PackagingInquiry model)
+        public async System.Threading.Tasks.Task<IActionResult> SubmitQuote(PackagingInquiry model)
         {
             if (model == null)
             {
-                return BadRequest();
+                return BadRequest("Invalid inquiry data.");
             }
-
-            model.CreatedOn = DateTimeOffset.Now;
-            _inquiryRepository.Add(model);
-
-            var subject = $"Packaging inquiry for {model.ProductSku ?? model.ProductName}";
-            var body = $"Product: {model.ProductName} ({model.ProductSku})\n" +
-                       $"Company: {model.CompanyName}\n" +
-                       $"Contact: {model.ContactName} <{model.ContactEmail}>\n" +
-                       $"Quantity: {model.QuantityNeeded}\n" +
-                       $"BoxDimensions: {model.BoxDimensions}\n" +
-                       $"Message: {model.Message}\n";
 
             try
             {
-                _emailSender.SendEmailAsync("pimplenilesh@gmail.com", subject, body);
-            }
-            catch
-            {
-                // swallow email errors for now
-            }
+                model.CreatedOn = DateTimeOffset.Now;
+                _inquiryRepository.Add(model);
+                _inquiryRepository.SaveChanges();
 
-            return Content("Quote Received");
+                var subject = $"Packaging inquiry for {model.ProductSku ?? model.ProductName}";
+                var body = $"Product: {model.ProductName} ({model.ProductSku})\n" +
+                           $"Company: {model.CompanyName}\n" +
+                           $"Contact: {model.ContactName} <{model.ContactEmail}>\n" +
+                           $"Quantity: {model.QuantityNeeded}\n" +
+                           $"Box Dimensions: {model.BoxDimensions}\n" +
+                           $"Message: {model.Message}\n";
+
+                try
+                {
+                    await _emailSender.SendEmailAsync("pimplenilesh@gmail.com", subject, body);
+                }
+                catch (Exception ex)
+                {
+                    // Log email error but don't fail the response - inquiry was saved
+                    System.Diagnostics.Debug.WriteLine($"Email error: {ex.Message}");
+                }
+
+                return Ok(new { message = "Quote request received successfully" });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error submitting quote: {ex.Message}");
+                return StatusCode(500, "An error occurred while processing your request.");
+            }
         }
     }
 }

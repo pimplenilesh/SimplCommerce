@@ -286,8 +286,7 @@
                 *@
 
                 <div class="add-to-cart">
-                    <form asp-area="Catalog" asp-controller="Inquiry" asp-action="SubmitQuote" method="post" class="inline">
-                        @Html.AntiForgeryToken()
+                    <form id="inquiryForm" class="inline">
                         <input type="hidden" name="ProductSku" value="@Model.Id" />
                         <input type="hidden" name="ProductName" value="@Model.Name" />
 
@@ -298,10 +297,16 @@
                             <input class="form-control" name="ContactEmail" placeholder="Email" type="email" required />
                         </div>
                         <div class="form-group">
+                            <input class="form-control" name="ContactName" placeholder="Contact name" />
+                        </div>
+                        <div class="form-group">
                             <input class="form-control" name="BoxDimensions" placeholder="Box dimensions" />
                         </div>
                         <div class="form-group">
                             <input class="form-control" name="QuantityNeeded" placeholder="Quantity" type="number" value="1" min="1" required />
+                        </div>
+                        <div class="form-group">
+                            <textarea class="form-control" name="Message" placeholder="Additional message" rows="3"></textarea>
                         </div>
 
                         <button type="submit" class="btn btn-primary">Request Wholesale Quote</button>
@@ -382,8 +387,77 @@
     @await Component.InvokeAsync("Comment", new { entityId = Model.Id, entityTypeId = "Product" })
 </div>
 
+@* Success Modal for Quote Submission *@
+<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="successModalLabel">Quote Request Received</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Thank you! Your packaging quote request has been received. We will email you shortly.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section scripts {
     <partial name="_ValidationScriptsPartial" />
     <script simpl-append-version="true" src="~/lib/smoothproducts/js/smoothproducts.js"></script>
     <script simpl-append-version="true" src="~/_content/SimplCommerce.Module.Catalog/product-detail.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const inquiryForm = document.getElementById('inquiryForm');
+
+            if (inquiryForm) {
+                inquiryForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    // Validate form
+                    if (!inquiryForm.checkValidity()) {
+                        inquiryForm.reportValidity();
+                        return;
+                    }
+
+                    // Create FormData from form
+                    const formData = new FormData(inquiryForm);
+
+                    // POST to the controller
+                    fetch('/Catalog/Inquiry/SubmitQuote', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // Hide the form
+                            inquiryForm.style.display = 'none';
+                            // Show success modal
+                            $('#successModal').modal('show');
+                            // Reset form for future use
+                            setTimeout(function() {
+                                inquiryForm.style.display = 'block';
+                                inquiryForm.reset();
+                            }, 5000); // Reset after 5 seconds
+                        } else {
+                            alert('An error occurred. Please try again.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                    });
+                });
+            }
+        });
+    </script>
 }

@@ -16,7 +16,7 @@
         <DirToCopy Condition="!$([System.Environment]::Is64BitOperatingSystem)">32bit</DirToCopy>
     </PropertyGroup>
   
-    <Copy SourceFiles="lib\$(DirToCopy)\$(FileToCopy)" DestinationFolder="$(SolutionDir)src\SimplCommerce.WebHost\$(OutDir)" />
+    <Copy SourceFiles="lib\$(DirToCopy)\$(FileToCopy)" DestinationFolder="..\..\..\src\SimplCommerce.WebHost\$(OutDir)" />
     <Copy SourceFiles="lib\$(DirToCopy)\$(FileToCopy)" DestinationFolder="$(OutDir)" />
   </Target>
 </Project>
